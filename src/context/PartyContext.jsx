@@ -36,9 +36,11 @@ export const PartyProvider = ({ children }) => {
       createdAt: new Date().toISOString(),
       guests: [],
       dishes: eventData.dishes || [],
-      amenities: eventData.amenities || []
+      amenities: eventData.amenities || [],
+      equipment: eventData.equipment || [],
+      items: eventData.items || []
     };
-    
+
     const updatedEvents = [...events, newEvent];
     setEvents(updatedEvents);
     saveEventsToStorage(updatedEvents);
@@ -46,7 +48,7 @@ export const PartyProvider = ({ children }) => {
   };
 
   const updateEvent = (eventId, updates) => {
-    const updatedEvents = events.map(event => 
+    const updatedEvents = events.map(event =>
       event.id === eventId ? { ...event, ...updates } : event
     );
     setEvents(updatedEvents);
@@ -72,23 +74,54 @@ export const PartyProvider = ({ children }) => {
       rsvp: 'pending'
     };
 
-    const updatedEvents = events.map(e => 
-      e.id === event.id 
+    const updatedEvents = events.map(e =>
+      e.id === event.id
         ? { ...e, guests: [...e.guests, newGuest] }
         : e
     );
 
     setEvents(updatedEvents);
     saveEventsToStorage(updatedEvents);
-    return { event: { ...event, guests: [...event.guests, newGuest] }, guest: newGuest };
+
+    return {
+      event: { ...event, guests: [...event.guests, newGuest] },
+      guest: newGuest
+    };
+  };
+
+  const addManualGuest = (eventId, guestData) => {
+    const event = events.find(e => e.id === eventId);
+    if (!event) {
+      throw new Error('Event not found');
+    }
+
+    const newGuest = {
+      id: uuidv4(),
+      ...guestData,
+      joinedAt: new Date().toISOString(),
+      rsvp: 'pending',
+      isManuallyAdded: true,
+      inviteCode: Math.random().toString(36).substring(2, 8).toUpperCase()
+    };
+
+    const updatedEvents = events.map(e =>
+      e.id === eventId
+        ? { ...e, guests: [...e.guests, newGuest] }
+        : e
+    );
+
+    setEvents(updatedEvents);
+    saveEventsToStorage(updatedEvents);
+
+    return newGuest;
   };
 
   const updateGuest = (eventId, guestId, updates) => {
-    const updatedEvents = events.map(event => 
-      event.id === eventId 
+    const updatedEvents = events.map(event =>
+      event.id === eventId
         ? {
             ...event,
-            guests: event.guests.map(guest => 
+            guests: event.guests.map(guest =>
               guest.id === guestId ? { ...guest, ...updates } : guest
             )
           }
@@ -99,12 +132,27 @@ export const PartyProvider = ({ children }) => {
   };
 
   const assignDish = (eventId, dishId, guestId) => {
-    const updatedEvents = events.map(event => 
-      event.id === eventId 
+    const updatedEvents = events.map(event =>
+      event.id === eventId
         ? {
             ...event,
-            dishes: event.dishes.map(dish => 
+            dishes: event.dishes.map(dish =>
               dish.id === dishId ? { ...dish, assignedTo: guestId } : dish
+            )
+          }
+        : event
+    );
+    setEvents(updatedEvents);
+    saveEventsToStorage(updatedEvents);
+  };
+
+  const assignItem = (eventId, itemId, guestId) => {
+    const updatedEvents = events.map(event =>
+      event.id === eventId
+        ? {
+            ...event,
+            items: (event.items || []).map(item =>
+              item.id === itemId ? { ...item, assignedTo: guestId } : item
             )
           }
         : event
@@ -126,7 +174,7 @@ export const PartyProvider = ({ children }) => {
   };
 
   const getGuestEvents = (guestEmail) => {
-    return events.filter(event => 
+    return events.filter(event =>
       event.guests.some(guest => guest.email === guestEmail)
     );
   };
@@ -138,8 +186,10 @@ export const PartyProvider = ({ children }) => {
     updateEvent,
     deleteEvent,
     joinEvent,
+    addManualGuest,
     updateGuest,
     assignDish,
+    assignItem,
     getEventByCode,
     getEventById,
     getUserEvents,

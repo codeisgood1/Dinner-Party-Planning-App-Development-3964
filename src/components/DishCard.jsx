@@ -3,17 +3,26 @@ import { motion } from 'framer-motion';
 import SafeIcon from '../common/SafeIcon';
 import * as FiIcons from 'react-icons/fi';
 
-const { FiUser, FiCheck, FiX } = FiIcons;
+const { FiEdit, FiTrash, FiCheck, FiUser } = FiIcons;
 
-const DishCard = ({ dish, assigned, guest, onAssign, onUnassign, canEdit = false }) => {
-  const categoryIcons = {
-    appetizers: '🥗',
-    mains: '🍽️',
-    sides: '🥘',
-    desserts: '🍰',
-    drinks: '🥤'
-  };
+const categoryIcons = {
+  appetizers: '🥗',
+  mains: '🍽️',
+  sides: '🥘',
+  desserts: '🍰',
+  drinks: '🥤'
+};
 
+const DishCard = ({ 
+  dish, 
+  assigned, 
+  guest, 
+  onAssign, 
+  onUnassign, 
+  canEdit = false,
+  onEditDish,
+  onDeleteDish 
+}) => {
   return (
     <motion.div
       className={`p-4 rounded-lg border-2 transition-all duration-300 ${
@@ -32,17 +41,20 @@ const DishCard = ({ dish, assigned, guest, onAssign, onUnassign, canEdit = false
             <p className="text-sm font-inter text-gray-600">{dish.description}</p>
           </div>
         </div>
-        {assigned && (
-          <div className="flex items-center space-x-2">
-            <SafeIcon icon={FiCheck} className="w-5 h-5 text-sage-500" />
-            {canEdit && (
-              <button
-                onClick={() => onUnassign(dish.id)}
-                className="p-1 text-coral-500 hover:text-coral-700 transition-colors"
-              >
-                <SafeIcon icon={FiX} className="w-4 h-4" />
-              </button>
-            )}
+        {canEdit && (
+          <div className="flex space-x-2">
+            <button
+              onClick={() => onEditDish(dish)}
+              className="p-1 text-gray-500 hover:text-coral-600 transition-colors"
+            >
+              <SafeIcon icon={FiEdit} className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => onDeleteDish(dish.id)}
+              className="p-1 text-gray-500 hover:text-red-600 transition-colors"
+            >
+              <SafeIcon icon={FiTrash} className="w-4 h-4" />
+            </button>
           </div>
         )}
       </div>
@@ -54,7 +66,7 @@ const DishCard = ({ dish, assigned, guest, onAssign, onUnassign, canEdit = false
         </div>
       )}
 
-      {!assigned && canEdit && (
+      {!assigned && (
         <button
           onClick={() => onAssign(dish.id)}
           className="w-full mt-3 px-4 py-2 bg-coral-500 text-white rounded-lg hover:bg-coral-600 transition-colors font-poppins font-medium"
@@ -63,16 +75,17 @@ const DishCard = ({ dish, assigned, guest, onAssign, onUnassign, canEdit = false
         </button>
       )}
 
-      {dish.dietary && dish.dietary.length > 0 && (
-        <div className="mt-3 flex flex-wrap gap-1">
-          {dish.dietary.map((diet, index) => (
-            <span
-              key={index}
-              className="px-2 py-1 bg-lavender-200 text-lavender-900 text-xs font-inter rounded-full"
+      {assigned && (
+        <div className="flex items-center space-x-2 mt-3">
+          <SafeIcon icon={FiCheck} className="w-5 h-5 text-sage-500" />
+          {canEdit && (
+            <button
+              onClick={() => onUnassign(dish.id)}
+              className="text-coral-500 hover:text-coral-700 transition-colors text-sm"
             >
-              {diet}
-            </span>
-          ))}
+              Unassign
+            </button>
+          )}
         </div>
       )}
     </motion.div>
