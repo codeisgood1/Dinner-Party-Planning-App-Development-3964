@@ -1,0 +1,176 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        // Primary Colors
+        coral: {
+          DEFAULT: '#FF6B6B',
+          50: '#FFF0F0',
+          100: '#FFE0E0',
+          200: '#FFC7C7',
+          300: '#FFA3A3',
+          400: '#FF8787',
+          500: '#FF6B6B',
+          600: '#FF3838',
+          700: '#FF0505',
+          800: '#D20000',
+          900: '#9F0000',
+        },
+        sage: {
+          DEFAULT: '#4ECDC4',
+          50: '#DEFAF8',
+          100: '#C9F6F3',
+          200: '#A0EEEA',
+          300: '#77E6E0',
+          400: '#4ECDC4',
+          500: '#33B3AA',
+          600: '#278A83',
+          700: '#1C615C',
+          800: '#113A36',
+          900: '#051210',
+        },
+        cream: {
+          DEFAULT: '#FFF8E7',
+          50: '#FFFFFF',
+          100: '#FFF8E7',
+          200: '#FFEDBB',
+          300: '#FFE28F',
+          400: '#FFD763',
+          500: '#FFCC37',
+          600: '#FAB800',
+          700: '#CE9700',
+          800: '#A27500',
+          900: '#765400',
+        },
+        // Accent Colors
+        golden: {
+          DEFAULT: '#FFE66D',
+          50: '#FFFFFF',
+          100: '#FFFEF9',
+          200: '#FFF8D1',
+          300: '#FFF2A9',
+          400: '#FFEC81',
+          500: '#FFE66D',
+          600: '#FFDE35',
+          700: '#FFD500',
+          800: '#CCA800',
+          900: '#947A00',
+        },
+        peach: {
+          DEFAULT: '#FF8E53',
+          50: '#FFFFFF',
+          100: '#FFF8F3',
+          200: '#FFE1CF',
+          300: '#FFCAAB',
+          400: '#FFB487',
+          500: '#FF8E53',
+          600: '#FF6C20',
+          700: '#EC4D00',
+          800: '#B93C00',
+          900: '#862C00',
+        },
+        mint: {
+          DEFAULT: '#A8E6CF',
+          50: '#FFFFFF',
+          100: '#FBFEFC',
+          200: '#E3F7EF',
+          300: '#CBF0E2',
+          400: '#B4EBD6',
+          500: '#A8E6CF',
+          600: '#7ADAB7',
+          700: '#4CCEA0',
+          800: '#32AB7F',
+          900: '#257F5D',
+        },
+        lavender: {
+          DEFAULT: '#C7CEEA',
+          50: '#FFFFFF',
+          100: '#FFFFFF',
+          200: '#FFFFFF',
+          300: '#F6F8FC',
+          400: '#E1E5F3',
+          500: '#C7CEEA',
+          600: '#9FAADA',
+          700: '#7786CA',
+          800: '#5062BA',
+          900: '#394899',
+        },
+        // Neutral Colors
+        charcoal: {
+          DEFAULT: '#2C3E50',
+          50: '#8CA5C1',
+          100: '#7C99B9',
+          200: '#5D81A7',
+          300: '#4B6A8A',
+          400: '#39526C',
+          500: '#2C3E50',
+          600: '#1A2530',
+          700: '#080C11',
+          800: '#000000',
+          900: '#000000',
+        },
+        gray: {
+          DEFAULT: '#7F8C8D',
+          50: '#D5D9D9',
+          100: '#C9CFCF',
+          200: '#B1B9BA',
+          300: '#99A3A4',
+          400: '#7F8C8D',
+          500: '#667273',
+          600: '#4D5656',
+          700: '#343A3A',
+          800: '#1B1D1D',
+          900: '#020202',
+        },
+        lightgray: {
+          DEFAULT: '#ECF0F1',
+          50: '#FFFFFF',
+          100: '#FFFFFF',
+          200: '#FFFFFF',
+          300: '#FFFFFF',
+          400: '#FBFCFC',
+          500: '#ECF0F1',
+          600: '#CED8DA',
+          700: '#AFC0C3',
+          800: '#90A8AD',
+          900: '#718F96',
+        }
+      },
+      fontFamily: {
+        'poppins': ['Poppins', 'sans-serif'],
+        'inter': ['Inter', 'sans-serif'],
+        'comfortaa': ['Comfortaa', 'cursive'],
+      },
+      animation: {
+        'fade-in': 'fadeIn 0.5s ease-in-out',
+        'slide-up': 'slideUp 0.3s ease-out',
+        'bounce-gentle': 'bounceGentle 0.6s ease-in-out',
+        'doodle': 'doodle 3s ease-in-out infinite',
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' }
+        },
+        slideUp: {
+          '0%': { transform: 'translateY(10px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' }
+        },
+        bounceGentle: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-4px)' }
+        },
+        doodle: {
+          '0%, 100%': { transform: 'rotate(-1deg)' },
+          '50%': { transform: 'rotate(1deg)' }
+        }
+      }
+    },
+  },
+  plugins: [],
+}
