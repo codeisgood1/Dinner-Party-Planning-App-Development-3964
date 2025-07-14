@@ -87,20 +87,7 @@ export default {
           800: '#32AB7F',
           900: '#257F5D',
         },
-        lavender: {
-          DEFAULT: '#C7CEEA',
-          50: '#FFFFFF',
-          100: '#FFFFFF',
-          200: '#FFFFFF',
-          300: '#F6F8FC',
-          400: '#E1E5F3',
-          500: '#C7CEEA',
-          600: '#9FAADA',
-          700: '#7786CA',
-          800: '#5062BA',
-          900: '#394899',
-        },
-        // Neutral Colors
+        // UI Colors
         charcoal: {
           DEFAULT: '#2C3E50',
           50: '#8CA5C1',
@@ -144,31 +131,7 @@ export default {
       fontFamily: {
         'poppins': ['Poppins', 'sans-serif'],
         'inter': ['Inter', 'sans-serif'],
-        'comfortaa': ['Comfortaa', 'cursive'],
-      },
-      animation: {
-        'fade-in': 'fadeIn 0.5s ease-in-out',
-        'slide-up': 'slideUp 0.3s ease-out',
-        'bounce-gentle': 'bounceGentle 0.6s ease-in-out',
-        'doodle': 'doodle 3s ease-in-out infinite',
-      },
-      keyframes: {
-        fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' }
-        },
-        slideUp: {
-          '0%': { transform: 'translateY(10px)', opacity: '0' },
-          '100%': { transform: 'translateY(0)', opacity: '1' }
-        },
-        bounceGentle: {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-4px)' }
-        },
-        doodle: {
-          '0%, 100%': { transform: 'rotate(-1deg)' },
-          '50%': { transform: 'rotate(1deg)' }
-        }
+        'comfortaa': ['Comfortaa', 'cursive']
       }
     },
   },

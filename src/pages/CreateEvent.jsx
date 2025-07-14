@@ -1,93 +1,114 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { useParty } from '../context/PartyContext';
+import { themes, getDishCategories } from '../data/themes';
 import SafeIcon from '../common/SafeIcon';
 import ThemeCard from '../components/ThemeCard';
-import { themes, getDishCategories } from '../data/themes';
 import * as FiIcons from 'react-icons/fi';
+import toast from 'react-hot-toast';
 
-const { FiArrowRight, FiArrowLeft, FiCalendar, FiMapPin, FiUsers, FiPlus, FiTrash2, FiEdit } = FiIcons;
+const { FiCalendar, FiMapPin, FiUsers, FiArrowRight, FiArrowLeft, FiPlus, FiX, FiCheck, FiAlignLeft, FiTemplate, FiFolder } = FiIcons;
 
 const CreateEvent = () => {
-  const { user } = useAuth();
-  const { createEvent } = useParty();
-  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [eventData, setEventData] = useState({
     title: '',
     date: '',
     time: '',
     location: '',
+    description: '',
     theme: null,
+    customTheme: {
+      id: 'custom',
+      name: 'Custom Theme',
+      icon: '🎨',
+      gradient: 'from-purple-500 to-pink-500',
+      dishes: []
+    },
     maxGuests: 10,
     dishes: [],
     customDishes: []
   });
-
   const [customDish, setCustomDish] = useState({
     name: '',
-    category: '',
+    category: 'mains',
     description: ''
   });
+  const [customThemeName, setCustomThemeName] = useState('Custom Theme');
+  const [customThemeIcon, setCustomThemeIcon] = useState('🎨');
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [loading, setLoading] = useState(false);
+  
+  const { user } = useAuth();
+  const { createEvent, templates, createFromTemplate } = useParty();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleNext = () => {
-    if (step === 1 && (!eventData.title || !eventData.date || !eventData.time)) {
-      toast.error('Please fill in all required fields');
-      return;
+  useEffect(() => {
+    if (!user) {
+      navigate('/');
+      toast.error('Please log in to create an event');
     }
-    
-    if (step === 2 && !eventData.theme) {
-      toast.error('Please select a theme');
-      return;
-    }
+  }, [user, navigate]);
 
-    if (step === 4) {
-      handleCreateEvent();
-      return;
+  // Load template if one was selected from dashboard
+  useEffect(() => {
+    if (location.state?.templateId) {
+      const template = templates.find(t => t.id === location.state.templateId);
+      if (template) {
+        loadTemplate(template);
+      }
     }
+  }, [location.state, templates]);
 
-    setStep(step + 1);
+  const loadTemplate = (template) => {
+    setEventData({
+      ...eventData,
+      theme: template.theme,
+      dishes: template.dishes.map(dish => ({
+        ...dish,
+        id: `${template.theme}-${dish.category}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      }))
+    });
+    toast.success(`Template "${template.name}" loaded!`);
   };
 
-  const handlePrev = () => {
-    if (step > 1) {
-      setStep(step - 1);
-    }
+  const handleSelectTheme = (theme) => {
+    setEventData({
+      ...eventData,
+      theme: theme.id,
+      dishes: theme.dishes.map(dish => ({
+        ...dish,
+        id: `${theme.id}-${dish.category}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      }))
+    });
   };
 
-  const handleThemeSelect = (theme) => {
-    // If custom theme, just set the theme ID without adding dishes
-    if (theme.id === 'custom') {
-      setEventData({
-        ...eventData,
-        theme: theme.id,
-        dishes: []
-      });
-    } else {
-      setEventData({
-        ...eventData,
-        theme: theme.id,
-        dishes: theme.dishes.map(dish => ({
-          ...dish,
-          id: `${theme.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          isThemeDish: true
-        }))
-      });
-    }
+  const handleCreateCustomTheme = () => {
+    const customTheme = {
+      id: 'custom',
+      name: customThemeName || 'Custom Theme',
+      icon: customThemeIcon || '🎨',
+      gradient: 'from-purple-500 to-pink-500',
+      dishes: []
+    };
+
+    setEventData({
+      ...eventData,
+      theme: 'custom',
+      customTheme,
+      dishes: []
+    });
   };
 
   const handleAddCustomDish = () => {
-    if (!customDish.name || !customDish.category) {
-      toast.error('Please fill in all required fields');
-      return;
-    }
+    if (!customDish.name) return;
 
     const newDish = {
-      id: `custom-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       ...customDish,
+      id: `custom-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       isCustom: true
     };
 
@@ -98,11 +119,9 @@ const CreateEvent = () => {
 
     setCustomDish({
       name: '',
-      category: '',
+      category: 'mains',
       description: ''
     });
-
-    toast.success('Custom dish added successfully!');
   };
 
   const handleRemoveDish = (dishId) => {
@@ -110,56 +129,72 @@ const CreateEvent = () => {
       ...eventData,
       dishes: eventData.dishes.filter(dish => dish.id !== dishId)
     });
-    toast.success('Dish removed');
   };
 
-  const handleCreateEvent = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Validate required fields
+    if (!eventData.title.trim()) {
+      toast.error('Please enter an event title');
+      return;
+    }
+
+    if (!eventData.theme) {
+      toast.error('Please select a theme');
+      return;
+    }
+
+    setLoading(true);
+
     try {
-      if (!user) {
-        toast.error('Please log in to create an event');
-        return;
-      }
+      console.log('Submitting event data:', eventData);
 
-      const newEvent = {
-        ...eventData,
+      // Prepare theme data
+      const finalThemeData = eventData.theme === 'custom' 
+        ? eventData.customTheme 
+        : themes[eventData.theme];
+
+      // Create the event
+      const newEvent = await createEvent({
+        title: eventData.title.trim(),
+        description: eventData.description.trim(),
+        date: eventData.date,
+        time: eventData.time,
+        location: eventData.location.trim(),
+        theme: eventData.theme,
+        themeData: finalThemeData,
+        maxGuests: eventData.maxGuests,
+        dishes: eventData.dishes,
         hostId: user.id,
-        hostName: user.name,
-        createdAt: new Date().toISOString(),
-        code: Math.random().toString(36).substring(2, 8).toUpperCase()
-      };
+        hostName: user.name
+      });
 
-      const createdEvent = createEvent(newEvent);
+      console.log('Event created successfully:', newEvent);
+
+      // Show success message and navigate
       toast.success('Event created successfully!');
-      navigate(`/event/${createdEvent.id}`);
+      navigate(`/event/${newEvent.id}`);
     } catch (error) {
-      toast.error('Failed to create event');
       console.error('Error creating event:', error);
+      toast.error(error.message || 'Failed to create event');
+    } finally {
+      setLoading(false);
     }
   };
-
-  const renderStepIndicator = () => (
-    <div className="flex items-center justify-center mb-8">
-      {[1, 2, 3, 4].map((num) => (
-        <div key={num} className="flex items-center">
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center 
-            ${step >= num ? 'bg-coral-500 text-white' : 'bg-gray-200 text-gray-500'}`}>
-            {num}
-          </div>
-          {num < 4 && (
-            <div className={`w-12 h-1 ${step > num ? 'bg-coral-500' : 'bg-gray-200'}`} />
-          )}
-        </div>
-      ))}
-    </div>
-  );
 
   const renderStep1 = () => (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -20 }}
       className="space-y-6"
     >
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Event Details</h2>
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Event Details</h2>
+        <p className="text-gray-600">Let's start with the basic information about your dinner party.</p>
+      </div>
+
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -170,67 +205,97 @@ const CreateEvent = () => {
             value={eventData.title}
             onChange={(e) => setEventData({ ...eventData, title: e.target.value })}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-coral-500"
-            placeholder="Enter event title"
+            placeholder="e.g., Italian Dinner Night"
             required
           />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
-              <SafeIcon icon={FiCalendar} className="mr-2 w-4 h-4" />
-              Date *
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Date
             </label>
-            <input
-              type="date"
-              value={eventData.date}
-              onChange={(e) => setEventData({ ...eventData, date: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-coral-500"
-              required
-            />
+            <div className="relative">
+              <input
+                type="date"
+                value={eventData.date}
+                onChange={(e) => setEventData({ ...eventData, date: e.target.value })}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-coral-500"
+              />
+              <SafeIcon icon={FiCalendar} className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Time *
+              Time
             </label>
             <input
               type="time"
               value={eventData.time}
               onChange={(e) => setEventData({ ...eventData, time: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-coral-500"
-              required
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
-            <SafeIcon icon={FiMapPin} className="mr-2 w-4 h-4" />
+          <label className="block text-sm font-medium text-gray-700 mb-2">
             Location
           </label>
-          <input
-            type="text"
-            value={eventData.location}
-            onChange={(e) => setEventData({ ...eventData, location: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-coral-500"
-            placeholder="Enter event location"
-          />
+          <div className="relative">
+            <input
+              type="text"
+              value={eventData.location}
+              onChange={(e) => setEventData({ ...eventData, location: e.target.value })}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-coral-500"
+              placeholder="e.g., My place, 123 Main St"
+            />
+            <SafeIcon icon={FiMapPin} className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
+          </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
-            <SafeIcon icon={FiUsers} className="mr-2 w-4 h-4" />
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Event Description
+          </label>
+          <div className="relative">
+            <SafeIcon icon={FiAlignLeft} className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+            <textarea
+              value={eventData.description}
+              onChange={(e) => setEventData({ ...eventData, description: e.target.value })}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-coral-500"
+              placeholder="Tell your guests what this event is about..."
+              rows="3"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
             Maximum Guests
           </label>
-          <input
-            type="number"
-            min="1"
-            max="100"
-            value={eventData.maxGuests}
-            onChange={(e) => setEventData({ ...eventData, maxGuests: parseInt(e.target.value) })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-coral-500"
-          />
+          <div className="relative">
+            <input
+              type="number"
+              value={eventData.maxGuests}
+              onChange={(e) => setEventData({ ...eventData, maxGuests: parseInt(e.target.value) })}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-coral-500"
+              min="1"
+              max="50"
+            />
+            <SafeIcon icon={FiUsers} className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
+          </div>
         </div>
+      </div>
+
+      <div className="text-right">
+        <button
+          onClick={() => setStep(2)}
+          className="px-6 py-3 bg-coral-500 text-white rounded-lg hover:bg-coral-600 transition-colors flex items-center ml-auto"
+        >
+          Next: Choose Theme
+          <SafeIcon icon={FiArrowRight} className="ml-2 w-5 h-5" />
+        </button>
       </div>
     </motion.div>
   );
@@ -239,55 +304,160 @@ const CreateEvent = () => {
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -20 }}
       className="space-y-6"
     >
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Choose Theme</h2>
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Choose a Theme</h2>
+        <p className="text-gray-600">
+          Select a theme for your dinner party. This will help suggest dishes and set the mood.
+        </p>
+      </div>
+
+      {/* Template and Custom Theme Actions */}
+      <div className="bg-cream-50 p-4 rounded-lg mb-6">
+        <div className="flex flex-col md:flex-row gap-4">
+          {/* Load Template Button */}
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">Load from Template</h3>
+            <button
+              onClick={() => setShowTemplates(true)}
+              className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center"
+            >
+              <SafeIcon icon={FiFolder} className="mr-2 w-4 h-4" />
+              Browse Templates ({templates?.length || 0})
+            </button>
+          </div>
+
+          {/* Custom Theme Creator */}
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">Create Custom Theme</h3>
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <input
+                type="text"
+                value={customThemeName}
+                onChange={(e) => setCustomThemeName(e.target.value)}
+                placeholder="Theme name"
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-coral-500"
+              />
+              <input
+                type="text"
+                value={customThemeIcon}
+                onChange={(e) => setCustomThemeIcon(e.target.value)}
+                placeholder="🎨"
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-coral-500"
+              />
+            </div>
+            <button
+              onClick={handleCreateCustomTheme}
+              className="w-full px-4 py-2 bg-coral-500 text-white rounded-lg hover:bg-coral-600 transition-colors flex items-center justify-center"
+            >
+              <SafeIcon icon={FiPlus} className="mr-2 w-4 h-4" />
+              Create Custom Theme
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Custom Theme Card */}
+        {eventData.theme === 'custom' && (
+          <ThemeCard
+            key="custom"
+            theme={eventData.customTheme}
+            selected={eventData.theme === 'custom'}
+            onSelect={() => handleSelectTheme(eventData.customTheme)}
+          />
+        )}
+
+        {/* Predefined Theme Cards */}
         {Object.values(themes).map((theme) => (
           <ThemeCard
             key={theme.id}
             theme={theme}
             selected={eventData.theme === theme.id}
-            onSelect={handleThemeSelect}
+            onSelect={handleSelectTheme}
           />
         ))}
-        
-        {/* Custom Theme Card */}
-        <motion.div 
-          className={`relative p-6 rounded-xl cursor-pointer transition-all duration-300 
-            ${eventData.theme === 'custom' ? 'ring-2 ring-coral-500 bg-white shadow-lg scale-105' : 'bg-white hover:shadow-md hover:scale-102'}`}
-          onClick={() => handleThemeSelect({id: 'custom', name: 'Custom Theme'})}
-          whileHover={{ y: -2 }}
-          whileTap={{ scale: 0.98 }}
+      </div>
+
+      <div className="flex justify-between">
+        <button
+          onClick={() => setStep(1)}
+          className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center"
         >
-          <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 opacity-10" />
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-4xl animate-doodle">✏️</span>
-              {eventData.theme === 'custom' && (
-                <div className="w-6 h-6 bg-coral-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm">✓</span>
+          <SafeIcon icon={FiArrowLeft} className="mr-2 w-5 h-5" />
+          Back
+        </button>
+        <button
+          onClick={() => setStep(3)}
+          className="px-6 py-3 bg-coral-500 text-white rounded-lg hover:bg-coral-600 transition-colors flex items-center"
+          disabled={!eventData.theme}
+        >
+          Next: Review Dishes
+          <SafeIcon icon={FiArrowRight} className="ml-2 w-5 h-5" />
+        </button>
+      </div>
+
+      {/* Templates Modal */}
+      {showTemplates && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-gray-900">Choose a Template</h2>
+                <button
+                  onClick={() => setShowTemplates(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <SafeIcon icon={FiX} className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+              
+              {templates && templates.length > 0 ? (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {templates.map((template) => (
+                    <div
+                      key={template.id}
+                      className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden border border-gray-200 cursor-pointer"
+                      onClick={() => {
+                        loadTemplate(template);
+                        setShowTemplates(false);
+                      }}
+                    >
+                      <div className={`h-2 bg-gradient-to-r ${template.theme_data?.gradient || 'from-purple-500 to-pink-500'}`} />
+                      <div className="p-4">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex items-center space-x-3">
+                            <span className="text-2xl">{template.theme_data?.icon || '🎨'}</span>
+                            <div>
+                              <h3 className="text-lg font-bold text-gray-900">{template.name}</h3>
+                              <p className="text-sm text-gray-600">by {template.created_by_name}</p>
+                            </div>
+                          </div>
+                        </div>
+                        {template.description && (
+                          <p className="text-gray-600 text-sm mb-4">{template.description}</p>
+                        )}
+                        <div className="flex items-center justify-between text-sm text-gray-600">
+                          <span>{template.dishes?.length || 0} dishes</span>
+                          <span>{template.usage_count || 0} uses</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <SafeIcon icon={FiTemplate} className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No templates yet</h3>
+                  <p className="text-gray-600">Create some events and save them as templates!</p>
                 </div>
               )}
             </div>
-            <h3 className="text-xl font-poppins font-bold text-charcoal-800 mb-2">Create Your Own</h3>
-            <p className="text-gray-600 font-inter text-sm mb-4">
-              Build a custom menu from scratch
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <span className="px-2 py-1 bg-cream-100 text-gray-600 text-xs rounded-full font-inter">
-                Custom Dishes
-              </span>
-              <span className="px-2 py-1 bg-cream-100 text-gray-600 text-xs rounded-full font-inter">
-                Your Favorites
-              </span>
-              <span className="px-2 py-1 bg-cream-100 text-gray-600 text-xs rounded-full font-inter">
-                Full Control
-              </span>
-            </div>
           </div>
-        </motion.div>
-      </div>
+        </div>
+      )}
     </motion.div>
   );
 
@@ -295,207 +465,136 @@ const CreateEvent = () => {
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -20 }}
       className="space-y-6"
     >
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Customize Dishes</h2>
-      
-      {/* Theme Dishes */}
-      {eventData.dishes.filter(dish => dish.isThemeDish).length > 0 && (
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-700">Theme Dishes</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {eventData.dishes.filter(dish => dish.isThemeDish).map((dish) => (
-              <div key={dish.id} className="p-4 bg-white rounded-lg border border-gray-200">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h4 className="font-semibold text-gray-800">{dish.name}</h4>
-                    <p className="text-sm text-gray-600">{dish.description}</p>
-                    <span className="inline-block mt-2 px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                      {getDishCategories().find(cat => cat.id === dish.category)?.name}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => handleRemoveDish(dish.id)}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    <SafeIcon icon={FiTrash2} className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Add Custom Dish */}
-      <div className="bg-cream-50 p-6 rounded-lg border border-cream-200">
-        <h3 className="text-lg font-semibold text-gray-700 mb-4">
-          {eventData.theme === 'custom' ? 'Add Your Dishes' : 'Add Custom Dish'}
-        </h3>
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Dish Name *
-              </label>
-              <input
-                type="text"
-                value={customDish.name}
-                onChange={(e) => setCustomDish({ ...customDish, name: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-coral-500"
-                placeholder="Enter dish name"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Category *
-              </label>
-              <select
-                value={customDish.category}
-                onChange={(e) => setCustomDish({ ...customDish, category: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-coral-500"
-              >
-                <option value="">Select category</option>
-                {getDishCategories().map(cat => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Description
-            </label>
-            <input
-              type="text"
-              value={customDish.description}
-              onChange={(e) => setCustomDish({ ...customDish, description: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-coral-500"
-              placeholder="Enter dish description"
-            />
-          </div>
-          <button
-            type="button"
-            onClick={handleAddCustomDish}
-            className="px-4 py-2 bg-coral-500 text-white rounded-lg hover:bg-coral-600 transition-colors flex items-center space-x-2"
-          >
-            <SafeIcon icon={FiPlus} className="w-5 h-5" />
-            <span>Add Dish</span>
-          </button>
-        </div>
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Review Dishes</h2>
+        <p className="text-gray-600">
+          These dishes are suggested based on your theme. You can add, remove, or modify dishes.
+        </p>
       </div>
 
-      {/* Custom Dishes List */}
-      {eventData.dishes.filter(dish => dish.isCustom).length > 0 && (
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-700">
-            {eventData.theme === 'custom' ? 'Your Dishes' : 'Custom Dishes'}
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {eventData.dishes.filter(dish => dish.isCustom).map((dish) => (
-              <div key={dish.id} className="p-4 bg-white rounded-lg border border-gray-200">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h4 className="font-semibold text-gray-800">{dish.name}</h4>
-                    <p className="text-sm text-gray-600">{dish.description}</p>
-                    <span className="inline-block mt-2 px-2 py-1 bg-coral-100 text-coral-600 text-xs rounded-full">
-                      {getDishCategories().find(cat => cat.id === dish.category)?.name}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => handleRemoveDish(dish.id)}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    <SafeIcon icon={FiTrash2} className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
+      {/* Add Custom Dish Form */}
+      <div className="bg-cream-50 p-4 rounded-lg">
+        <h3 className="text-lg font-semibold text-gray-800 mb-3">Add a Custom Dish</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+          <input
+            type="text"
+            value={customDish.name}
+            onChange={(e) => setCustomDish({ ...customDish, name: e.target.value })}
+            placeholder="Dish name"
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-coral-500"
+          />
+          <select
+            value={customDish.category}
+            onChange={(e) => setCustomDish({ ...customDish, category: e.target.value })}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-coral-500"
+          >
+            {getDishCategories().map(cat => (
+              <option key={cat.id} value={cat.id}>{cat.name}</option>
             ))}
-          </div>
+          </select>
+          <input
+            type="text"
+            value={customDish.description}
+            onChange={(e) => setCustomDish({ ...customDish, description: e.target.value })}
+            placeholder="Description"
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-coral-500"
+          />
         </div>
-      )}
+        <button
+          onClick={handleAddCustomDish}
+          className="px-4 py-2 bg-coral-500 text-white rounded-lg hover:bg-coral-600 transition-colors flex items-center"
+          disabled={!customDish.name}
+        >
+          <SafeIcon icon={FiPlus} className="mr-2 w-4 h-4" />
+          Add Dish
+        </button>
+      </div>
 
-      {eventData.dishes.length === 0 && (
-        <div className="text-center p-8 bg-cream-50 rounded-lg">
-          <div className="text-4xl mb-3">🍽️</div>
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">No Dishes Added Yet</h3>
-          <p className="text-gray-600 mb-4">
-            Start adding dishes to your event using the form above.
-          </p>
-        </div>
-      )}
-    </motion.div>
-  );
+      {/* Dish List by Category */}
+      <div className="space-y-6">
+        {getDishCategories().map(category => {
+          const categoryDishes = eventData.dishes.filter(dish => dish.category === category.id);
+          if (categoryDishes.length === 0) return null;
 
-  const renderStep4 = () => (
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      className="space-y-6"
-    >
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Review & Create</h2>
-      <div className="bg-white rounded-lg p-6 border border-gray-200">
-        <div className="space-y-4">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-800">Event Details</h3>
-            <div className="mt-2 space-y-2">
-              <p><strong>Title:</strong> {eventData.title}</p>
-              <p><strong>Date:</strong> {eventData.date}</p>
-              <p><strong>Time:</strong> {eventData.time}</p>
-              {eventData.location && <p><strong>Location:</strong> {eventData.location}</p>}
-              <p><strong>Max Guests:</strong> {eventData.maxGuests}</p>
-              <p><strong>Theme:</strong> {eventData.theme === 'custom' ? 'Custom Theme' : themes[eventData.theme]?.name}</p>
+          return (
+            <div key={category.id}>
+              <h3 className="text-xl font-semibold text-gray-800 mb-3 flex items-center">
+                <span className="mr-2">{category.icon}</span>
+                {category.name}
+              </h3>
+              <div className="space-y-3">
+                {categoryDishes.map(dish => (
+                  <div
+                    key={dish.id}
+                    className="flex justify-between items-center p-3 bg-white rounded-lg border border-gray-200"
+                  >
+                    <div>
+                      <h4 className="font-medium text-gray-800">{dish.name}</h4>
+                      {dish.description && (
+                        <p className="text-sm text-gray-600">{dish.description}</p>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handleRemoveDish(dish.id)}
+                      className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                      <SafeIcon icon={FiX} className="w-5 h-5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-          
-          <div>
-            <h3 className="text-lg font-semibold text-gray-800">Dishes ({eventData.dishes.length})</h3>
-            <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-              {eventData.dishes.map((dish) => (
-                <div key={dish.id} className="p-3 bg-cream-50 rounded-lg">
-                  <h4 className="font-medium text-gray-800">{dish.name}</h4>
-                  <p className="text-sm text-gray-600">{dish.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+          );
+        })}
+      </div>
+
+      <div className="flex justify-between">
+        <button
+          onClick={() => setStep(2)}
+          className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center"
+        >
+          <SafeIcon icon={FiArrowLeft} className="mr-2 w-5 h-5" />
+          Back
+        </button>
+        <button
+          onClick={handleSubmit}
+          className="px-6 py-3 bg-coral-500 text-white rounded-lg hover:bg-coral-600 transition-colors flex items-center"
+          disabled={loading}
+        >
+          {loading ? (
+            <>
+              <span className="animate-spin mr-2">⏳</span>
+              Creating...
+            </>
+          ) : (
+            <>
+              Create Event
+              <SafeIcon icon={FiCheck} className="ml-2 w-5 h-5" />
+            </>
+          )}
+        </button>
       </div>
     </motion.div>
   );
 
   return (
-    <div className="min-h-screen bg-cream-50 py-12">
-      <div className="max-w-4xl mx-auto px-4">
-        {renderStepIndicator()}
-        <div className="bg-white rounded-xl shadow-lg p-8">
-          {step === 1 && renderStep1()}
-          {step === 2 && renderStep2()}
-          {step === 3 && renderStep3()}
-          {step === 4 && renderStep4()}
-
-          <div className="mt-8 flex justify-between">
-            <button
-              type="button"
-              onClick={handlePrev}
-              className={`px-6 py-3 rounded-lg flex items-center space-x-2 
-                ${step === 1 ? 'opacity-50 cursor-not-allowed bg-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
-              disabled={step === 1}
-            >
-              <SafeIcon icon={FiArrowLeft} className="w-5 h-5" />
-              <span>Previous</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleNext}
-              className={`px-6 py-3 rounded-lg flex items-center space-x-2 
-                ${step === 4 ? 'bg-green-500 hover:bg-green-600' : 'bg-coral-500 hover:bg-coral-600'} text-white`}
-            >
-              <span>{step === 4 ? 'Create Event' : 'Next'}</span>
-              <SafeIcon icon={FiArrowRight} className="w-5 h-5" />
-            </button>
+    <div className="max-w-4xl mx-auto px-4 py-12">
+      <div className="bg-white rounded-xl shadow-sm p-6 md:p-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Create a Dinner Party</h1>
+          <div className="flex items-center space-x-2">
+            <div className={`h-1 flex-1 rounded-full ${step >= 1 ? 'bg-coral-500' : 'bg-gray-200'}`}></div>
+            <div className={`h-1 flex-1 rounded-full ${step >= 2 ? 'bg-coral-500' : 'bg-gray-200'}`}></div>
+            <div className={`h-1 flex-1 rounded-full ${step >= 3 ? 'bg-coral-500' : 'bg-gray-200'}`}></div>
           </div>
         </div>
+
+        {step === 1 && renderStep1()}
+        {step === 2 && renderStep2()}
+        {step === 3 && renderStep3()}
       </div>
     </div>
   );

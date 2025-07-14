@@ -171,3 +171,50 @@
   background-image: url("data:image/svg+xml,%3Csvg width='40' height='1' viewBox='0 0 40 1' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0.5 L40 0.5' stroke='%232C3E50' stroke-width='0.5' stroke-dasharray='2,2' /%3E%3C/svg%3E");
   background-repeat: repeat-x;
 }
+
+/* Animation for the join form */
+@keyframes doodle {
+  0%, 100% {
+    transform: rotate(-1deg) translateY(0);
+  }
+  50% {
+    transform: rotate(1deg) translateY(-5px);
+  }
+}
+
+.animate-doodle {
+  animation: doodle 3s ease-in-out infinite;
+}
+
+/* Pulse animation for buttons */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 107, 107, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 107, 107, 0);
+  }
+}
+
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+/* For responsive hero section */
+@media (max-width: 768px) {
+  .hero-section {
+    flex-direction: column;
+  }
+  
+  .hero-content, .join-form {
+    width: 100%;
+  }
+}
+
+/* Scale for small devices */
+.scale-102 {
+  transform: scale(1.02);
+}

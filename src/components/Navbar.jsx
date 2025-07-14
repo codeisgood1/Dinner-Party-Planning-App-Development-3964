@@ -3,23 +3,32 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import SafeIcon from '../common/SafeIcon';
+import UserMenu from './UserMenu';
 import * as FiIcons from 'react-icons/fi';
+import toast from 'react-hot-toast';
 
-const { FiMenu, FiX, FiUser, FiPlus, FiHome, FiCalendar, FiLogOut } = FiIcons;
+const { FiMenu, FiX, FiUser, FiPlus, FiHome, FiCalendar } = FiIcons;
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-    setIsMenuOpen(false);
-  };
-
   const isActive = (path) => location.pathname === path;
+
+  const handleGetStarted = () => {
+    if (user) {
+      navigate('/create');
+    } else {
+      // Redirect to home page with auth modal trigger
+      navigate('/?auth=register');
+      // Close the mobile menu if it's open
+      if (isMenuOpen) {
+        setIsMenuOpen(false);
+      }
+    }
+  };
 
   return (
     <motion.nav 
@@ -51,6 +60,7 @@ const Navbar = () => {
               <SafeIcon icon={FiHome} className="w-5 h-5" />
               <span>Home</span>
             </Link>
+
             {user && (
               <>
                 <Link
@@ -62,6 +72,7 @@ const Navbar = () => {
                   <SafeIcon icon={FiPlus} className="w-5 h-5" />
                   <span>Create Event</span>
                 </Link>
+
                 <Link
                   to="/dashboard"
                   className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors font-inter ${
@@ -78,30 +89,15 @@ const Navbar = () => {
           {/* User Menu */}
           <div className="hidden md:flex items-center space-x-4">
             {user ? (
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-coral-500 rounded-full flex items-center justify-center">
-                    <span className="text-white text-sm font-poppins font-medium">
-                      {user.name?.charAt(0)?.toUpperCase() || 'U'}
-                    </span>
-                  </div>
-                  <span className="text-charcoal-500 font-poppins font-medium">{user.name}</span>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="p-2 text-gray-500 hover:text-coral-600 transition-colors"
-                  title="Logout"
-                >
-                  <SafeIcon icon={FiLogOut} className="w-5 h-5" />
-                </button>
-              </div>
+              <UserMenu />
             ) : (
-              <Link
-                to="/"
-                className="bg-coral-500 text-white px-4 py-2 rounded-lg hover:bg-coral-600 transition-colors font-poppins font-medium"
+              <button
+                onClick={handleGetStarted}
+                className="bg-coral-500 text-white px-6 py-2 rounded-lg hover:bg-coral-600 transition-colors font-poppins font-medium flex items-center space-x-2"
               >
-                Get Started
-              </Link>
+                <SafeIcon icon={FiUser} className="w-5 h-5" />
+                <span>Get Started</span>
+              </button>
             )}
           </div>
 
@@ -122,67 +118,45 @@ const Navbar = () => {
         animate={{ opacity: isMenuOpen ? 1 : 0, height: isMenuOpen ? 'auto' : 0 }}
         transition={{ duration: 0.2 }}
       >
-        <div className="px-4 py-2 space-y-2">
+        <div className="px-4 py-2 space-y-1">
           <Link
             to="/"
-            onClick={() => setIsMenuOpen(false)}
-            className={`flex items-center space-x-3 px-3 py-3 rounded-lg transition-colors font-inter ${
+            className={`block px-3 py-2 rounded-lg transition-colors ${
               isActive('/') ? 'bg-coral-50 text-coral-700' : 'text-charcoal-500 hover:bg-cream-100'
             }`}
           >
-            <SafeIcon icon={FiHome} className="w-5 h-5" />
-            <span>Home</span>
+            Home
           </Link>
-          {user && (
+
+          {user ? (
             <>
               <Link
                 to="/create"
-                onClick={() => setIsMenuOpen(false)}
-                className={`flex items-center space-x-3 px-3 py-3 rounded-lg transition-colors font-inter ${
+                className={`block px-3 py-2 rounded-lg transition-colors ${
                   isActive('/create') ? 'bg-coral-50 text-coral-700' : 'text-charcoal-500 hover:bg-cream-100'
                 }`}
               >
-                <SafeIcon icon={FiPlus} className="w-5 h-5" />
-                <span>Create Event</span>
+                Create Event
               </Link>
               <Link
                 to="/dashboard"
-                onClick={() => setIsMenuOpen(false)}
-                className={`flex items-center space-x-3 px-3 py-3 rounded-lg transition-colors font-inter ${
+                className={`block px-3 py-2 rounded-lg transition-colors ${
                   isActive('/dashboard') ? 'bg-coral-50 text-coral-700' : 'text-charcoal-500 hover:bg-cream-100'
                 }`}
               >
-                <SafeIcon icon={FiCalendar} className="w-5 h-5" />
-                <span>Dashboard</span>
+                Dashboard
               </Link>
-            </>
-          )}
-          {user ? (
-            <div className="border-t pt-2">
-              <div className="flex items-center space-x-3 px-3 py-3">
-                <div className="w-8 h-8 bg-coral-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-poppins font-medium">
-                    {user.name?.charAt(0)?.toUpperCase() || 'U'}
-                  </span>
-                </div>
-                <span className="text-charcoal-500 font-poppins font-medium">{user.name}</span>
+              <div className="border-t border-gray-200 my-2 py-2">
+                <UserMenu />
               </div>
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center space-x-3 px-3 py-3 text-coral-600 hover:bg-coral-50 rounded-lg transition-colors font-inter"
-              >
-                <SafeIcon icon={FiLogOut} className="w-5 h-5" />
-                <span>Logout</span>
-              </button>
-            </div>
+            </>
           ) : (
-            <Link
-              to="/"
-              onClick={() => setIsMenuOpen(false)}
-              className="block w-full bg-coral-500 text-white text-center px-4 py-3 rounded-lg hover:bg-coral-600 transition-colors font-poppins font-medium"
+            <button
+              onClick={handleGetStarted}
+              className="block w-full px-3 py-2 bg-coral-500 text-white rounded-lg hover:bg-coral-600 transition-colors text-center"
             >
               Get Started
-            </Link>
+            </button>
           )}
         </div>
       </motion.div>

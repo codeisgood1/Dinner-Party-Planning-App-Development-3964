@@ -1,20 +1,157 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@400;500;600&family=Comfortaa:wght@300;400;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+:root {
+  /* Primary Colors */
+  --coral: #FF6B6B;
+  --sage: #4ECDC4;
+  --cream: #FFF8E7;
+
+  /* Accent Colors */
+  --golden: #FFE66D;
+  --peach: #FF8E53;
+  --mint: #A8E6CF;
+
+  /* Neutrals */
+  --charcoal: #2C3E50;
+  --gray: #7F8C8D;
+  --lightgray: #ECF0F1;
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: 'Inter', sans-serif;
+  background-color: var(--cream);
+  color: var(--charcoal);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#root {
+h1, h2, h3, h4, h5, h6, .heading {
+  font-family: 'Poppins', sans-serif;
+}
+
+.theme-name {
+  font-family: 'Comfortaa', cursive;
+}
+
+/* Typography Scale */
+h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+@media (min-width: 640px) {
+  h1 {
+    font-size: 2.5rem;
+  }
+}
+
+h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+h3 {
+  font-size: 1.25rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* Button Styles */
+.btn {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-primary {
+  background-color: var(--coral);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #ff5252;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background-color: var(--sage);
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #45b7ae;
+  transform: translateY(-1px);
+}
+
+/* Form Styles */
+input, textarea, select {
+  font-family: 'Inter', sans-serif;
+  border-radius: 0.5rem;
+  border: 1px solid var(--lightgray);
+  padding: 0.75rem 1rem;
   width: 100%;
-  height: 100%;
+  transition: all 0.2s ease-in-out;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--coral);
+  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+}
+
+/* Card Styles */
+.card {
+  background-color: white;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: all 0.2s ease-in-out;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Animation Classes */
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--cream);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--coral);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #ff5252;
 }

@@ -4,14 +4,15 @@ import { motion } from 'framer-motion';
 import { useParty } from '../context/PartyContext';
 import { getDishCategories } from '../data/themes';
 import SafeIcon from '../common/SafeIcon';
+import EventChat from '../components/EventChat';
 import * as FiIcons from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
-const { FiCalendar, FiMapPin, FiUsers, FiCheck, FiX, FiClock, FiMail, FiTool, FiPackage } = FiIcons;
+const { FiCalendar, FiMapPin, FiUsers, FiCheck, FiX, FiClock, FiMail, FiTool, FiPackage, FiAlignLeft, FiMessageSquare } = FiIcons;
 
 const GuestView = () => {
   const { eventId } = useParams();
-  const { getEventById, updateGuest, assignDish, assignItem } = useParty();
+  const { getEventById, updateGuest, assignDish, assignItem, updateEvent } = useParty();
   const [selectedDishes, setSelectedDishes] = useState([]);
   const [rsvpStatus, setRsvpStatus] = useState('pending');
   const [activeTab, setActiveTab] = useState('dishes');
@@ -25,8 +26,8 @@ const GuestView = () => {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Event Not Found</h1>
           <p className="text-gray-600 mb-6">The event you're looking for doesn't exist.</p>
-          <button 
-            onClick={() => navigate('/')} 
+          <button
+            onClick={() => navigate('/')}
             className="px-6 py-3 bg-coral-500 text-white rounded-lg hover:bg-coral-600 transition-colors"
           >
             Go Home
@@ -37,12 +38,7 @@ const GuestView = () => {
   }
 
   // For demo purposes, we'll simulate being a guest
-  const currentGuest = event.guests[0] || {
-    id: 'demo-guest',
-    name: 'Demo Guest',
-    email: 'demo@example.com',
-    rsvp: 'pending'
-  };
+  const currentGuest = event.guests[0] || { id: 'demo-guest', name: 'Demo Guest', email: 'demo@example.com', rsvp: 'pending' };
 
   const handleRSVP = (status) => {
     setRsvpStatus(status);
@@ -68,6 +64,13 @@ const GuestView = () => {
   const handleUnclaimItem = (itemId) => {
     assignItem(event.id, itemId, null);
     toast.success('Item unclaimed');
+  };
+  
+  const handleSendMessage = (newMessage) => {
+    const currentMessages = event.messages || [];
+    updateEvent(eventId, { 
+      messages: [...currentMessages, newMessage] 
+    });
   };
 
   const myDishes = event.dishes.filter(dish => dish.assignedTo === currentGuest.id);
@@ -115,6 +118,17 @@ const GuestView = () => {
         </div>
       </div>
 
+      {/* Event Description */}
+      {event.description && (
+        <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
+          <div className="flex items-center space-x-2 mb-4">
+            <SafeIcon icon={FiAlignLeft} className="w-5 h-5 text-coral-500" />
+            <h2 className="text-xl font-bold text-gray-900">About This Event</h2>
+          </div>
+          <p className="text-gray-700 whitespace-pre-line">{event.description}</p>
+        </div>
+      )}
+
       {/* RSVP Section */}
       <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
         <h2 className="text-xl font-bold text-gray-900 mb-4">Your RSVP</h2>
@@ -130,33 +144,50 @@ const GuestView = () => {
               <p className="text-sm text-gray-600">{currentGuest.email}</p>
             </div>
           </div>
-          <div className={`flex items-center space-x-2 px-3 py-1 rounded-full 
-            ${rsvpStatus === 'yes' ? 'bg-green-100 text-green-700' : 
-              rsvpStatus === 'no' ? 'bg-red-100 text-red-700' : 
-              'bg-yellow-100 text-yellow-700'}`}>
-            <SafeIcon icon={rsvpStatus === 'yes' ? FiCheck : rsvpStatus === 'no' ? FiX : FiClock} className="w-4 h-4" />
+          <div
+            className={`flex items-center space-x-2 px-3 py-1 rounded-full ${
+              rsvpStatus === 'yes'
+                ? 'bg-green-100 text-green-700'
+                : rsvpStatus === 'no'
+                ? 'bg-red-100 text-red-700'
+                : 'bg-yellow-100 text-yellow-700'
+            }`}
+          >
+            <SafeIcon
+              icon={rsvpStatus === 'yes' ? FiCheck : rsvpStatus === 'no' ? FiX : FiClock}
+              className="w-4 h-4"
+            />
             <span className="text-sm capitalize">{rsvpStatus}</span>
           </div>
         </div>
         <div className="flex space-x-3">
           <button
             onClick={() => handleRSVP('yes')}
-            className={`px-6 py-3 rounded-lg font-medium transition-colors 
-              ${rsvpStatus === 'yes' ? 'bg-green-600 text-white' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}
+            className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+              rsvpStatus === 'yes'
+                ? 'bg-green-600 text-white'
+                : 'bg-green-100 text-green-700 hover:bg-green-200'
+            }`}
           >
             I'll be there!
           </button>
           <button
             onClick={() => handleRSVP('no')}
-            className={`px-6 py-3 rounded-lg font-medium transition-colors 
-              ${rsvpStatus === 'no' ? 'bg-red-600 text-white' : 'bg-red-100 text-red-700 hover:bg-red-200'}`}
+            className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+              rsvpStatus === 'no'
+                ? 'bg-red-600 text-white'
+                : 'bg-red-100 text-red-700 hover:bg-red-200'
+            }`}
           >
             Can't make it
           </button>
           <button
             onClick={() => handleRSVP('pending')}
-            className={`px-6 py-3 rounded-lg font-medium transition-colors 
-              ${rsvpStatus === 'pending' ? 'bg-yellow-600 text-white' : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'}`}
+            className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+              rsvpStatus === 'pending'
+                ? 'bg-yellow-600 text-white'
+                : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
+            }`}
           >
             Maybe
           </button>
@@ -194,7 +225,7 @@ const GuestView = () => {
                 </div>
               </div>
             )}
-            
+
             {myItems.length > 0 && (
               <div>
                 <h3 className="font-semibold text-gray-800 mb-3">Items ({myItems.length})</h3>
@@ -233,7 +264,8 @@ const GuestView = () => {
               { id: 'dishes', label: 'Dishes', count: event.dishes.length },
               { id: 'items', label: 'Items', count: (event.items || []).length },
               { id: 'equipment', label: 'Equipment', count: (event.equipment || []).length },
-              { id: 'guests', label: 'Guests', count: event.guests.length }
+              { id: 'guests', label: 'Guests', count: event.guests.length },
+              { id: 'chat', label: 'Chat', count: (event.messages || []).length }
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -259,7 +291,6 @@ const GuestView = () => {
                 {getDishCategories().map((category) => {
                   const categoryDishes = event.dishes.filter(dish => dish.category === category.id);
                   if (categoryDishes.length === 0) return null;
-
                   return (
                     <div key={category.id}>
                       <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center space-x-2">
@@ -272,17 +303,21 @@ const GuestView = () => {
                           const assignedGuest = event.guests.find(g => g.id === dish.assignedTo);
                           const isMyDish = dish.assignedTo === currentGuest.id;
                           const isAvailable = !dish.assignedTo;
-                          
                           return (
-                            <div key={dish.id} className={`p-4 rounded-lg border-2 transition-colors
-                              ${isMyDish ? 'border-green-300 bg-green-50' : 
-                                isAvailable ? 'border-gray-200 bg-white hover:border-coral-200' : 
-                                'border-gray-200 bg-gray-50'}`}>
+                            <div
+                              key={dish.id}
+                              className={`p-4 rounded-lg border-2 transition-colors ${
+                                isMyDish
+                                  ? 'border-green-300 bg-green-50'
+                                  : isAvailable
+                                  ? 'border-gray-200 bg-white hover:border-coral-200'
+                                  : 'border-gray-200 bg-gray-50'
+                              }`}
+                            >
                               <div className="flex items-start justify-between">
                                 <div className="flex-1">
                                   <h4 className="font-semibold text-gray-800">{dish.name}</h4>
                                   <p className="text-sm text-gray-600 mb-3">{dish.description}</p>
-                                  
                                   {assignedGuest && (
                                     <div className="flex items-center space-x-2 mb-2">
                                       <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
@@ -291,7 +326,6 @@ const GuestView = () => {
                                     </div>
                                   )}
                                 </div>
-                                
                                 <div className="ml-4">
                                   {isAvailable && (
                                     <button
@@ -330,7 +364,6 @@ const GuestView = () => {
                 {itemCategories.map((category) => {
                   const categoryItems = (event.items || []).filter(item => item.category === category.id);
                   if (categoryItems.length === 0) return null;
-
                   return (
                     <div key={category.id}>
                       <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center space-x-2">
@@ -343,17 +376,21 @@ const GuestView = () => {
                           const assignedGuest = event.guests.find(g => g.id === item.assignedTo);
                           const isMyItem = item.assignedTo === currentGuest.id;
                           const isAvailable = !item.assignedTo;
-                          
                           return (
-                            <div key={item.id} className={`p-4 rounded-lg border-2 transition-colors
-                              ${isMyItem ? 'border-blue-300 bg-blue-50' : 
-                                isAvailable ? 'border-gray-200 bg-white hover:border-coral-200' : 
-                                'border-gray-200 bg-gray-50'}`}>
+                            <div
+                              key={item.id}
+                              className={`p-4 rounded-lg border-2 transition-colors ${
+                                isMyItem
+                                  ? 'border-blue-300 bg-blue-50'
+                                  : isAvailable
+                                  ? 'border-gray-200 bg-white hover:border-coral-200'
+                                  : 'border-gray-200 bg-gray-50'
+                              }`}
+                            >
                               <div className="flex items-start justify-between">
                                 <div className="flex-1">
                                   <h4 className="font-semibold text-gray-800">{item.name}</h4>
                                   <p className="text-sm text-gray-600 mb-3">{item.description}</p>
-                                  
                                   <div className="flex items-center space-x-2 mb-2">
                                     <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
                                       Qty: {item.quantity}
@@ -365,7 +402,6 @@ const GuestView = () => {
                                     )}
                                   </div>
                                 </div>
-                                
                                 <div className="ml-4">
                                   {isAvailable && (
                                     <button
@@ -392,7 +428,6 @@ const GuestView = () => {
                     </div>
                   );
                 })}
-                
                 {(event.items || []).length === 0 && (
                   <div className="text-center py-12">
                     <div className="text-6xl mb-4">📦</div>
@@ -427,7 +462,6 @@ const GuestView = () => {
                     </div>
                   </div>
                 ))}
-                
                 {(event.equipment || []).length === 0 && (
                   <div className="text-center py-12">
                     <div className="text-6xl mb-4">🔧</div>
@@ -449,7 +483,6 @@ const GuestView = () => {
                 {event.guests.map((guest) => {
                   const guestDishes = event.dishes.filter(dish => dish.assignedTo === guest.id);
                   const guestItems = (event.items || []).filter(item => item.assignedTo === guest.id);
-                  
                   return (
                     <div key={guest.id} className="p-4 border border-gray-200 rounded-lg">
                       <div className="flex items-center space-x-3 mb-2">
@@ -465,15 +498,21 @@ const GuestView = () => {
                           </p>
                         </div>
                       </div>
-                      
-                      <div className={`flex items-center space-x-2 px-2 py-1 rounded-full text-xs
-                        ${guest.rsvp === 'yes' ? 'bg-green-100 text-green-700' : 
-                          guest.rsvp === 'no' ? 'bg-red-100 text-red-700' : 
-                          'bg-yellow-100 text-yellow-700'}`}>
-                        <SafeIcon icon={guest.rsvp === 'yes' ? FiCheck : guest.rsvp === 'no' ? FiX : FiClock} className="w-3 h-3" />
+                      <div
+                        className={`flex items-center space-x-2 px-2 py-1 rounded-full text-xs ${
+                          guest.rsvp === 'yes'
+                            ? 'bg-green-100 text-green-700'
+                            : guest.rsvp === 'no'
+                            ? 'bg-red-100 text-red-700'
+                            : 'bg-yellow-100 text-yellow-700'
+                        }`}
+                      >
+                        <SafeIcon
+                          icon={guest.rsvp === 'yes' ? FiCheck : guest.rsvp === 'no' ? FiX : FiClock}
+                          className="w-3 h-3"
+                        />
                         <span className="capitalize">{guest.rsvp || 'pending'}</span>
                       </div>
-                      
                       {(guestDishes.length > 0 || guestItems.length > 0) && (
                         <div className="mt-3 text-sm text-gray-600">
                           {guestDishes.map((dish, index) => (
@@ -488,6 +527,16 @@ const GuestView = () => {
                   );
                 })}
               </div>
+            </div>
+          )}
+          
+          {/* Chat Tab */}
+          {activeTab === 'chat' && (
+            <div>
+              <EventChat 
+                event={event}
+                onSendMessage={handleSendMessage}
+              />
             </div>
           )}
         </div>
