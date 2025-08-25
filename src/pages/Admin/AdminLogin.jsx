@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import SafeIcon from '../../common/SafeIcon';
@@ -6,13 +6,7 @@ import * as FiIcons from 'react-icons/fi';
 import supabase from '../../lib/supabase';
 import toast from 'react-hot-toast';
 
-const { 
-  FiLock, 
-  FiMail, 
-  FiShield, 
-  FiAlertTriangle,
-  FiUser
-} = FiIcons;
+const { FiLock, FiMail, FiShield, FiAlertTriangle, FiUser } = FiIcons;
 
 const AdminLogin = () => {
   const [email, setEmail] = useState('');
@@ -20,10 +14,113 @@ const AdminLogin = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    // Ensure admin account exists in the database
+    const setupAdminAccount = async () => {
+      try {
+        // Check if admin exists in the users table
+        const { data: existingUsers, error: userCheckError } = await supabase
+          .from('users_dp73hk')
+          .select('id')
+          .eq('email', 'theimperialopa@gmail.com')
+          .limit(1);
+
+        if (userCheckError) {
+          console.error('Error checking for admin user:', userCheckError);
+          return;
+        }
+
+        if (!existingUsers || existingUsers.length === 0) {
+          console.log('Admin user not found in database, attempting to create...');
+          
+          // First create the auth user if needed
+          try {
+            const { data: authUser, error: authError } = await supabase.auth.signUp({
+              email: 'theimperialopa@gmail.com',
+              password: '2871306a5819',
+              options: {
+                data: { 
+                  name: 'Admin User',
+                  is_admin: true,
+                  admin_role: 'super_admin'
+                }
+              }
+            });
+            
+            if (authError && !authError.message.includes('already registered')) {
+              console.error('Error creating admin auth user:', authError);
+              return;
+            }
+            
+            const userId = authUser?.user?.id;
+            
+            if (userId) {
+              // Create user profile
+              const userProfile = {
+                id: userId,
+                email: 'theimperialopa@gmail.com',
+                name: 'Admin User',
+                created_at: new Date().toISOString()
+              };
+
+              const { error: profileError } = await supabase
+                .from('users_dp73hk')
+                .insert([userProfile]);
+
+              if (profileError && !profileError.message.includes('duplicate')) {
+                console.error('Error creating admin profile:', profileError);
+              } else {
+                console.log('Admin user record created successfully');
+              }
+
+              // Check if admin role exists
+              const { data: existingAdmin, error: adminCheckError } = await supabase
+                .from('admins_3tqfm7')
+                .select('id')
+                .eq('user_id', userId)
+                .limit(1);
+
+              if (adminCheckError) {
+                console.error('Error checking for admin role:', adminCheckError);
+                return;
+              }
+
+              if (!existingAdmin || existingAdmin.length === 0) {
+                // Create admin role
+                const { error: adminError } = await supabase
+                  .from('admins_3tqfm7')
+                  .insert([{
+                    user_id: userId,
+                    role: 'super_admin',
+                    is_active: true,
+                    created_at: new Date().toISOString()
+                  }]);
+
+                if (adminError && !adminError.message.includes('duplicate')) {
+                  console.error('Error creating admin role:', adminError);
+                } else {
+                  console.log('Admin role created successfully');
+                }
+              }
+            }
+          } catch (err) {
+            console.error('Error in admin setup process:', err);
+          }
+        } else {
+          console.log('Admin user already exists in database');
+        }
+      } catch (error) {
+        console.error('Error in setupAdminAccount:', error);
+      }
+    };
+
+    setupAdminAccount();
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
+    
     try {
       // For demo purposes, we'll use a hardcoded credential check
       if (email === 'admin@dinnerdoodle.com' && password === 'admin123') {
@@ -36,19 +133,20 @@ const AdminLogin = () => {
           role: 'admin'
         };
         localStorage.setItem('admin-session', JSON.stringify(adminUser));
+        
         toast.success('Welcome to Admin Panel!');
         navigate('/admin/dashboard');
         return;
       }
-
+      
       // Try Supabase auth if hardcoded credentials don't match
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
-
+      
       if (error) throw error;
-
+      
       // Check if user has admin role
       const { data: adminData, error: adminError } = await supabase
         .from('admins_3tqfm7')
@@ -56,11 +154,11 @@ const AdminLogin = () => {
         .eq('user_id', data.user.id)
         .eq('is_active', true)
         .single();
-
+        
       if (adminError || !adminData) {
         throw new Error('Access denied: Not an admin user');
       }
-
+      
       // Store admin session
       const adminUser = {
         ...data.user,
@@ -68,7 +166,7 @@ const AdminLogin = () => {
         role: adminData.role
       };
       localStorage.setItem('admin-session', JSON.stringify(adminUser));
-
+      
       toast.success('Welcome to Admin Panel!');
       navigate('/admin/dashboard');
     } catch (error) {
@@ -81,7 +179,7 @@ const AdminLogin = () => {
 
   return (
     <div className="min-h-screen bg-cream-50 flex items-center justify-center p-4">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-white rounded-xl shadow-xl p-8 w-full max-w-md"
@@ -93,7 +191,7 @@ const AdminLogin = () => {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Login</h1>
           <p className="text-gray-600">Access the administration dashboard</p>
         </div>
-
+        
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
@@ -111,7 +209,7 @@ const AdminLogin = () => {
               <SafeIcon icon={FiMail} className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
             </div>
           </div>
-
+          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Password
@@ -127,18 +225,18 @@ const AdminLogin = () => {
               <SafeIcon icon={FiLock} className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
             </div>
           </div>
-
+          
           <div className="bg-cream-50 p-4 rounded-lg">
             <div className="flex items-center">
               <SafeIcon icon={FiUser} className="w-5 h-5 text-coral-500 mr-2" />
               <div className="text-sm">
-                <p className="font-medium">Demo Credentials:</p>
-                <p>Email: admin@dinnerdoodle.com</p>
-                <p>Password: admin123</p>
+                <p className="font-medium">Admin Credentials:</p>
+                <p>Email: theimperialopa@gmail.com</p>
+                <p>Password: 2871306a5819</p>
               </div>
             </div>
           </div>
-
+          
           <button
             type="submit"
             disabled={loading}
@@ -147,7 +245,7 @@ const AdminLogin = () => {
             {loading ? 'Authenticating...' : 'Sign In'}
           </button>
         </form>
-
+        
         <div className="mt-6 text-center">
           <Link to="/" className="text-coral-600 hover:text-coral-700 text-sm">
             Back to Homepage
@@ -158,5 +256,4 @@ const AdminLogin = () => {
   );
 };
 
-// Add the missing default export
 export default AdminLogin;

@@ -1,0 +1,106 @@
+/* Combine App.css and index.css */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@400;500;600&family=Comfortaa:wght@300;400;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Common styles */
+@layer base {
+  :root {
+    /* Colors */
+    --coral: #FF6B6B;
+    --sage: #4ECDC4;
+    --cream: #FFF8E7;
+    /* ... other variables */
+  }
+
+  body {
+    @apply font-inter bg-cream-100 text-charcoal-800;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-poppins;
+  }
+}
+
+/* Component styles */
+@layer components {
+  .btn-primary {
+    @apply px-4 py-2 bg-coral-500 text-white rounded-lg hover:bg-coral-600 transition-colors;
+  }
+
+  .card {
+    @apply bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #FFF8E7;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #FF6B6B;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #FF3838;
+}
+
+/* Theme-specific gradients */
+.theme-italian {
+  background: linear-gradient(135deg, #FF6B6B 0%, #4ECDC4 100%);
+}
+
+.theme-mexican {
+  background: linear-gradient(135deg, #FF8E53 0%, #FF6B6B 100%);
+}
+
+.theme-bbq {
+  background: linear-gradient(135deg, #FF8E53 0%, #FF6B6B 100%);
+}
+
+.theme-holiday {
+  background: linear-gradient(135deg, #FF6B6B 0%, #4ECDC4 100%);
+}
+
+.theme-asian {
+  background: linear-gradient(135deg, #FF6B6B 0%, #FFE66D 100%);
+}
+
+.theme-mediterranean {
+  background: linear-gradient(135deg, #4ECDC4 0%, #A8E6CF 100%);
+}
+
+/* Animation classes */
+.animate-doodle {
+  animation: doodle 3s ease-in-out infinite;
+}
+
+@keyframes doodle {
+  0%, 100% {
+    transform: rotate(-1deg) translateY(0);
+  }
+  50% {
+    transform: rotate(1deg) translateY(-5px);
+  }
+}
+
+/* Responsive utilities */
+@media (max-width: 768px) {
+  .hero-section {
+    flex-direction: column;
+  }
+}
+
+/* Scale for small devices */
+.scale-102 {
+  transform: scale(1.02);
+}

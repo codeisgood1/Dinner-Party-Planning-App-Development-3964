@@ -53,6 +53,162 @@ const Dashboard = () => {
     );
   }
 
+  // For demo user, create some sample events if none exist
+  useEffect(() => {
+    if (user && user.id === 'demo-user-id' && (!events || events.length === 0)) {
+      // Create demo events
+      const demoEvents = [
+        {
+          id: 'demo-event-1',
+          title: 'Italian Dinner Night',
+          description: 'Join us for a delightful evening of Italian cuisine and wine. Everyone brings a dish!',
+          date: '2023-12-15',
+          time: '19:00',
+          location: '123 Main St, Anytown',
+          code: 'PASTA1',
+          maxGuests: 8,
+          hostId: 'demo-user-id',
+          hostName: 'Demo User',
+          theme: 'italian',
+          themeData: {
+            id: 'italian',
+            name: 'Italian Night',
+            icon: '🍝',
+            gradient: 'from-coral-500 to-sage-500'
+          },
+          createdAt: '2023-11-20T12:00:00Z',
+          guests: [
+            {
+              id: 'guest-1',
+              name: 'Maria Johnson',
+              email: 'maria@example.com',
+              rsvp: 'yes'
+            },
+            {
+              id: 'guest-2',
+              name: 'John Smith',
+              email: 'john@example.com',
+              rsvp: 'yes'
+            },
+            {
+              id: 'guest-3',
+              name: 'Alex Brown',
+              email: 'alex@example.com',
+              rsvp: 'pending'
+            }
+          ],
+          dishes: [
+            {
+              id: 'dish-1',
+              name: 'Lasagna',
+              category: 'mains',
+              description: 'Classic meat lasagna',
+              assignedTo: 'guest-1'
+            },
+            {
+              id: 'dish-2',
+              name: 'Tiramisu',
+              category: 'desserts',
+              description: 'Coffee-flavored Italian dessert'
+            },
+            {
+              id: 'dish-3',
+              name: 'Bruschetta',
+              category: 'appetizers',
+              description: 'Toasted bread with tomatoes and basil',
+              assignedTo: 'guest-2'
+            }
+          ],
+          items: [],
+          messages: [
+            {
+              id: 'msg-1',
+              event_id: 'demo-event-1',
+              sender_id: 'guest-1',
+              sender_name: 'Maria Johnson',
+              text: 'Looking forward to this! Should I bring some wine too?',
+              is_private: false,
+              timestamp: '2023-11-21T15:30:00Z'
+            },
+            {
+              id: 'msg-2',
+              event_id: 'demo-event-1',
+              sender_id: 'demo-user-id',
+              sender_name: 'Demo User',
+              text: 'Yes, wine would be great! Red would pair well with the food.',
+              is_private: false,
+              timestamp: '2023-11-21T15:35:00Z'
+            }
+          ]
+        },
+        {
+          id: 'demo-event-2',
+          title: 'Summer BBQ Party',
+          description: 'Backyard BBQ with games and fun. Bring your favorite grilled dish!',
+          date: '2023-12-22',
+          time: '16:00',
+          location: 'City Park, Pavilion #3',
+          code: 'BBQ123',
+          maxGuests: 15,
+          hostId: 'demo-user-id',
+          hostName: 'Demo User',
+          theme: 'bbq',
+          themeData: {
+            id: 'bbq',
+            name: 'BBQ Cookout',
+            icon: '🔥',
+            gradient: 'from-golden-500 to-peach-600'
+          },
+          createdAt: '2023-11-25T14:00:00Z',
+          guests: [
+            {
+              id: 'guest-4',
+              name: 'Sam Wilson',
+              email: 'sam@example.com',
+              rsvp: 'yes'
+            },
+            {
+              id: 'guest-5',
+              name: 'Emma Davis',
+              email: 'emma@example.com',
+              rsvp: 'no'
+            }
+          ],
+          dishes: [
+            {
+              id: 'dish-4',
+              name: 'BBQ Ribs',
+              category: 'mains',
+              description: 'Slow-cooked pork ribs'
+            },
+            {
+              id: 'dish-5',
+              name: 'Corn on the Cob',
+              category: 'sides',
+              description: 'Grilled corn with butter',
+              assignedTo: 'guest-4'
+            }
+          ],
+          items: [
+            {
+              id: 'item-1',
+              name: 'Outdoor Games',
+              description: 'Frisbee, lawn games, etc.',
+              category: 'supplies',
+              quantity: 1
+            }
+          ],
+          messages: []
+        }
+      ];
+
+      // Set these events to local storage
+      localStorage.setItem('dinner-party-events', JSON.stringify(demoEvents));
+      // Update the state
+      events.push(...demoEvents);
+    }
+  }, [user, events]);
+
   const hostedEvents = getUserEvents(user.id) || [];
   const guestEvents = getGuestEvents(user.email) || [];
 
@@ -102,7 +258,11 @@ const Dashboard = () => {
     try {
       await saveAsTemplate(selectedEventForTemplate.id, templateData);
       setShowTemplateModal(false);
-      setTemplateData({ name: '', description: '', isPublic: false });
+      setTemplateData({
+        name: '',
+        description: '',
+        isPublic: false
+      });
       setSelectedEventForTemplate(null);
       toast.success('Template saved successfully!');
     } catch (error) {
@@ -164,7 +324,6 @@ const Dashboard = () => {
             </div>
           )}
         </div>
-        
         <div className="space-y-3 mb-4">
           {event.date && (
             <div className="flex items-center space-x-2 text-gray-600">
@@ -182,7 +341,6 @@ const Dashboard = () => {
             <SafeIcon icon={FiUsers} className="w-4 h-4" />
             <span>{event.guests?.length || 0} / {event.maxGuests || 10} guests</span>
           </div>
-          
           {isHost && event.code && (
             <div className="flex items-center justify-between mt-2 p-2 bg-cream-50 rounded-lg">
               <div className="text-xs text-gray-600">
@@ -198,7 +356,6 @@ const Dashboard = () => {
             </div>
           )}
         </div>
-
         <div className="flex items-center justify-between">
           <div className="flex space-x-4 text-sm">
             <span className="text-green-600">
@@ -244,16 +401,13 @@ const Dashboard = () => {
             </span>
           )}
         </div>
-
         {template.description && (
           <p className="text-gray-600 text-sm mb-4">{template.description}</p>
         )}
-
         <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
           <span>{template.dishes?.length || 0} dishes</span>
           <span>{template.usage_count || 0} uses</span>
         </div>
-
         <button
           onClick={() => navigate('/create', { state: { templateId: template.id } })}
           className="w-full px-4 py-2 bg-coral-500 text-white rounded-lg hover:bg-coral-600 transition-colors text-sm"
@@ -317,7 +471,6 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
-        
         <div className="bg-white p-6 rounded-xl shadow-sm">
           <div className="flex items-center space-x-3">
             <div className="p-3 bg-green-100 rounded-lg">
@@ -331,7 +484,6 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
-        
         <div className="bg-white p-6 rounded-xl shadow-sm">
           <div className="flex items-center space-x-3">
             <div className="p-3 bg-blue-100 rounded-lg">
@@ -343,7 +495,6 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
-
         <div className="bg-white p-6 rounded-xl shadow-sm">
           <div className="flex items-center space-x-3">
             <div className="p-3 bg-purple-100 rounded-lg">
@@ -380,7 +531,6 @@ const Dashboard = () => {
             ))}
           </nav>
         </div>
-
         <div className="p-6">
           {activeTab === 'hosting' && (
             <div>

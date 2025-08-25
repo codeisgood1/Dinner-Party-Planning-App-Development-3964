@@ -40,7 +40,7 @@ export const PartyProvider = ({ children }) => {
       setLoading(false);
       return;
     }
-    
+
     try {
       setLoading(true);
       console.log("Fetching events for user:", user?.id);
@@ -119,7 +119,7 @@ export const PartyProvider = ({ children }) => {
 
       // If no events from Supabase, add a mock event for testing
       const combinedEvents = [...hostedEvents];
-      
+
       // Add guest events that aren't already in the list
       if (guestEvents.length > 0) {
         guestEvents.forEach(guestEvent => {
@@ -134,7 +134,7 @@ export const PartyProvider = ({ children }) => {
         // Add mock event for testing purposes
         console.log("No events found, adding mock event for testing");
         combinedEvents.push(mockEvent);
-        
+
         // Also try to load from localStorage
         const savedEvents = localStorage.getItem('dinner-party-events');
         if (savedEvents) {
@@ -184,7 +184,7 @@ export const PartyProvider = ({ children }) => {
       localStorage.setItem('dinner-party-events', JSON.stringify(transformedEvents));
     } catch (error) {
       console.error('Error in fetchEvents:', error);
-      
+
       // Load from localStorage as fallback
       const savedEvents = localStorage.getItem('dinner-party-events');
       if (savedEvents) {
@@ -193,7 +193,6 @@ export const PartyProvider = ({ children }) => {
           setEvents(parsedEvents);
         } catch (parseError) {
           console.error('Error parsing saved events:', parseError);
-          
           // As a last resort, add a mock event
           setEvents([{
             id: `mock-${Date.now()}`,
@@ -259,7 +258,7 @@ export const PartyProvider = ({ children }) => {
       if (!user) {
         return;
       }
-      
+
       // Mock templates for testing
       const mockTemplates = [
         {
@@ -351,7 +350,6 @@ export const PartyProvider = ({ children }) => {
           usage_count: 5
         }
       ];
-      
       setTemplates(mockTemplates);
     }
   };
@@ -372,7 +370,6 @@ export const PartyProvider = ({ children }) => {
             .select('id')
             .eq('code', code)
             .single();
-          
           return !error && data;
         } catch (err) {
           return false;
@@ -381,7 +378,7 @@ export const PartyProvider = ({ children }) => {
 
       let code = generateCode();
       let exists = await checkCodeExists(code);
-      
+
       // Keep generating until we find a unique code (max 10 attempts)
       let attempts = 0;
       while (exists && attempts < 10) {
@@ -402,7 +399,6 @@ export const PartyProvider = ({ children }) => {
   const createEvent = async (eventData) => {
     try {
       console.log('Starting event creation with data:', eventData);
-      
       if (!user) {
         throw new Error('User not authenticated');
       }
@@ -584,6 +580,7 @@ export const PartyProvider = ({ children }) => {
       const updatedTemplates = [...templates, template];
       setTemplates(updatedTemplates);
       localStorage.setItem('dinner-party-templates', JSON.stringify(updatedTemplates));
+      
       toast.success('Template saved successfully! (Saved locally)');
       return template;
     } catch (error) {
@@ -625,8 +622,10 @@ export const PartyProvider = ({ children }) => {
 
       // Update local template usage count
       setTemplates(prev => 
-        prev.map(t => t.id === templateId ? 
-          {...t, usage_count: (t.usage_count || 0) + 1} : t
+        prev.map(t => 
+          t.id === templateId 
+            ? { ...t, usage_count: (t.usage_count || 0) + 1 } 
+            : t
         )
       );
 
@@ -724,6 +723,7 @@ export const PartyProvider = ({ children }) => {
       // Update localStorage
       const updatedEvents = events.filter(e => e.id !== eventId);
       localStorage.setItem('dinner-party-events', JSON.stringify(updatedEvents));
+
     } catch (error) {
       console.error('Error deleting event:', error);
       throw error;
@@ -749,7 +749,6 @@ export const PartyProvider = ({ children }) => {
         .eq('event_id', eventData.id);
 
       if (guestsError) throw guestsError;
-
       if (guestsData.length >= eventData.max_guests) {
         throw new Error('This event is full');
       }
@@ -785,6 +784,7 @@ export const PartyProvider = ({ children }) => {
 
       // Refresh events to get the updated data
       await fetchEvents();
+
       return true;
     } catch (error) {
       console.error('Error joining event:', error);
@@ -828,14 +828,13 @@ export const PartyProvider = ({ children }) => {
       // Update local state
       const updatedGuests = [...event.guests];
       updatedGuests[guestIndex] = { ...updatedGuests[guestIndex], ...updatedData };
-      
       const updatedEvent = { ...event, guests: updatedGuests };
       setEvents(prevEvents => prevEvents.map(e => e.id === eventId ? updatedEvent : e));
 
       // Update localStorage
-      localStorage.setItem('dinner-party-events', JSON.stringify(events.map(e => 
-        e.id === eventId ? updatedEvent : e
-      )));
+      localStorage.setItem('dinner-party-events', JSON.stringify(
+        events.map(e => e.id === eventId ? updatedEvent : e)
+      ));
 
       return updatedGuests[guestIndex];
     } catch (error) {
@@ -851,8 +850,8 @@ export const PartyProvider = ({ children }) => {
 
   // Get events where user is a guest
   const getGuestEvents = (userEmail) => {
-    return events.filter(event => 
-      event.guests.some(guest => guest.email === userEmail)
+    return events.filter(
+      event => event.guests.some(guest => guest.email === userEmail)
     );
   };
 
@@ -882,14 +881,13 @@ export const PartyProvider = ({ children }) => {
       const updatedDishes = event.dishes.map(dish => 
         dish.id === dishId ? { ...dish, assignedTo: guestId } : dish
       );
-      
       const updatedEvent = { ...event, dishes: updatedDishes };
       setEvents(prevEvents => prevEvents.map(e => e.id === eventId ? updatedEvent : e));
 
       // Update localStorage
-      localStorage.setItem('dinner-party-events', JSON.stringify(events.map(e => 
-        e.id === eventId ? updatedEvent : e
-      )));
+      localStorage.setItem('dinner-party-events', JSON.stringify(
+        events.map(e => e.id === eventId ? updatedEvent : e)
+      ));
 
       return updatedEvent;
     } catch (error) {
@@ -908,14 +906,13 @@ export const PartyProvider = ({ children }) => {
       const updatedItems = (event.items || []).map(item => 
         item.id === itemId ? { ...item, assignedTo: guestId } : item
       );
-      
       const updatedEvent = { ...event, items: updatedItems };
       setEvents(prevEvents => prevEvents.map(e => e.id === eventId ? updatedEvent : e));
 
       // Update localStorage
-      localStorage.setItem('dinner-party-events', JSON.stringify(events.map(e => 
-        e.id === eventId ? updatedEvent : e
-      )));
+      localStorage.setItem('dinner-party-events', JSON.stringify(
+        events.map(e => e.id === eventId ? updatedEvent : e)
+      ));
 
       return updatedEvent;
     } catch (error) {
@@ -951,3 +948,6 @@ export const PartyProvider = ({ children }) => {
     </PartyContext.Provider>
   );
 };
+
+// Fix: Export PartyProvider as default
+export default PartyProvider;

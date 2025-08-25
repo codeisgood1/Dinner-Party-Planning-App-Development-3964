@@ -70,6 +70,22 @@ const Footer = () => {
               </li>
               <li>
                 <Link 
+                  to="/features" 
+                  className="text-gray-300 hover:text-coral-400 transition-colors"
+                >
+                  Features
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  to="/pricing" 
+                  className="text-gray-300 hover:text-coral-400 transition-colors"
+                >
+                  Pricing
+                </Link>
+              </li>
+              <li>
+                <Link 
                   to="/create" 
                   className="text-gray-300 hover:text-coral-400 transition-colors"
                 >
@@ -83,14 +99,6 @@ const Footer = () => {
                 >
                   Dashboard
                 </Link>
-              </li>
-              <li>
-                <a 
-                  href="#features" 
-                  className="text-gray-300 hover:text-coral-400 transition-colors"
-                >
-                  Features
-                </a>
               </li>
             </ul>
           </div>

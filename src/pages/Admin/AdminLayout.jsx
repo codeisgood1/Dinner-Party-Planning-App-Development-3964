@@ -45,6 +45,22 @@ const AdminLayout = () => {
         return;
       }
 
+      // Special check for our admin email
+      if (user.email === 'theimperialopa@gmail.com') {
+        setIsAdmin(true);
+        setAdminRole('super_admin');
+        
+        // Store admin session
+        const adminUser = {
+          ...user,
+          isAdmin: true,
+          role: 'super_admin'
+        };
+        localStorage.setItem('admin-session', JSON.stringify(adminUser));
+        setLoading(false);
+        return;
+      }
+
       // Check if Supabase is properly configured
       if (!supabase.from) {
         console.warn('Supabase not configured properly');
@@ -66,7 +82,7 @@ const AdminLayout = () => {
       } else {
         setIsAdmin(true);
         setAdminRole(adminData.role);
-        
+
         // Store admin session
         const adminUser = {
           ...user,
@@ -135,7 +151,7 @@ const AdminLayout = () => {
               </div>
             </div>
           </div>
-
+          
           <div className="flex-grow p-5 overflow-y-auto">
             <nav className="space-y-1">
               <Link
@@ -145,6 +161,7 @@ const AdminLayout = () => {
                 <SafeIcon icon={FiHome} className="w-5 h-5 mr-3" />
                 Dashboard
               </Link>
+              
               <Link
                 to="/admin/users"
                 className={`flex items-center px-4 py-3 rounded-lg transition ${isActive('/admin/users')}`}
@@ -152,6 +169,7 @@ const AdminLayout = () => {
                 <SafeIcon icon={FiUsers} className="w-5 h-5 mr-3" />
                 User Management
               </Link>
+              
               <Link
                 to="/admin/events"
                 className={`flex items-center px-4 py-3 rounded-lg transition ${isActive('/admin/events')}`}
@@ -159,6 +177,7 @@ const AdminLayout = () => {
                 <SafeIcon icon={FiCalendar} className="w-5 h-5 mr-3" />
                 Event Management
               </Link>
+              
               <Link
                 to="/admin/reports"
                 className={`flex items-center px-4 py-3 rounded-lg transition ${isActive('/admin/reports')}`}
@@ -166,6 +185,7 @@ const AdminLayout = () => {
                 <SafeIcon icon={FiBarChart2} className="w-5 h-5 mr-3" />
                 Analytics & Reports
               </Link>
+              
               {adminRole === 'super_admin' && (
                 <Link
                   to="/admin/settings"
@@ -177,7 +197,7 @@ const AdminLayout = () => {
               )}
             </nav>
           </div>
-
+          
           <div className="p-5 border-t border-gray-200">
             <div className="flex items-center mb-4">
               <div className="w-10 h-10 bg-coral-100 rounded-full flex items-center justify-center">
@@ -190,6 +210,7 @@ const AdminLayout = () => {
                 <p className="text-xs text-gray-500 truncate">{user?.email}</p>
               </div>
             </div>
+            
             <button
               onClick={handleLogout}
               className="w-full flex items-center px-4 py-2 text-sm text-red-600 rounded-lg hover:bg-red-50"
@@ -200,7 +221,7 @@ const AdminLayout = () => {
           </div>
         </div>
       </motion.div>
-
+      
       {/* Mobile sidebar toggle */}
       <div className="fixed top-4 left-4 md:hidden z-40">
         <button
@@ -210,7 +231,7 @@ const AdminLayout = () => {
           <SafeIcon icon={sidebarOpen ? FiX : FiMenu} className="w-6 h-6" />
         </button>
       </div>
-
+      
       {/* Main content */}
       <motion.div
         className="flex-1 md:ml-64"
